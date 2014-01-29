@@ -24,31 +24,21 @@
 #include "appdb.h"
 
 const unsigned char echostr[] PROGMEM = "ECHO";
-const unsigned char readsectstr[] PROGMEM = "READSECT";
-const unsigned char flashidstr[] PROGMEM = "IDCHIP";
-const unsigned char qprotostr[] PROGMEM = "QPROTO";
-const unsigned char sprotostr[] PROGMEM = "SPROTO";
-const unsigned char spiidstr[] PROGMEM = "SPI-ID";
-const unsigned char spitststr[] PROGMEM = "SPITEST";
-const unsigned char partststr[] PROGMEM = "PARTEST";
-const unsigned char lpctststr[] PROGMEM = "LPCTEST";
-const unsigned char fwhtststr[] PROGMEM = "FWHTEST";
 const unsigned char bljumpstr[] PROGMEM = "BLJUMP";
+const unsigned char lcdistr[] PROGMEM = "LINIT";
+const unsigned char lcdcstr[] PROGMEM = "LCHAR";
+const unsigned char lcdbrstr[] PROGMEM = "LBRI";
+const unsigned char lcdwstr[] PROGMEM = "LW";
 const unsigned char calcstr[] PROGMEM = "CALC";
 const unsigned char helpstr[] PROGMEM = "?";
 
 const struct command_t appdb[] PROGMEM = {
 	{(PGM_P)echostr, &(echo_cmd)},
-	{(PGM_P)readsectstr, &(flash_readsect_cmd)},
-	{(PGM_P)flashidstr, &(flash_idchip_cmd)},
-	{(PGM_P)qprotostr, &(flash_proto_cmd)},
-	{(PGM_P)sprotostr, &(flash_sproto_cmd)},
-	{(PGM_P)spiidstr, &(spi_id_cmd)},
-	{(PGM_P)spitststr, &(spi_test_cmd)},
-	{(PGM_P)partststr, &(par_test_cmd)},
-	{(PGM_P)lpctststr, &(lpc_test_cmd)},
-	{(PGM_P)fwhtststr, &(fwh_test_cmd)},
 	{(PGM_P)bljumpstr, &(bljump_cmd)},
+	{(PGM_P)lcdistr, &(lcdr_cmd)},
+	{(PGM_P)lcdcstr, &(testdrawchar_cmd)},
+	{(PGM_P)lcdbrstr, &(lcdbr_cmd)},
+	{(PGM_P)lcdwstr, &(lcdw_cmd)},
 	{(PGM_P)calcstr, &(calc_cmd)},
 	{(PGM_P)helpstr, &(help_cmd)},
 	{NULL,NULL}

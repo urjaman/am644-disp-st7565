@@ -19,9 +19,9 @@
 ##
 
 PROJECT=frser-atmega644
-DEPS=uart.h frser.h udelay.h main.h parallel.h lpc.h flash.h fwh.h nibble.h
-CIFACE_SOURCES=ciface.c console.c lib.c appdb.c commands.c
-SOURCES=main.c uart.c flash.c udelay.c frser.c parallel.c lpc.c spi.c fwh.c nibble.c $(CIFACE_SOURCES)
+DEPS=uart.h frser.h udelay.h main.h flash.h
+CIFACE_SOURCES=ciface.c console.c lib.c appdb.c commands.c glcd.c glcdfont.c stlcd.c util.c
+SOURCES=main.c uart.c flash.c udelay.c frser.c  $(CIFACE_SOURCES)
 CC=avr-gcc
 LD=avr-ld
 OBJCOPY=avr-objcopy
@@ -97,3 +97,6 @@ blj-program: $(PROJECT).bin serialprogrammer
 
 serialprogrammer: serialprogrammer.c
 	gcc -W -Wall -Os -o serialprogrammer serialprogrammer.c
+
+objdump: $(PROJECT).out
+	$(AVRBINDIR)avr-objdump -xd $(PROJECT).out | less
