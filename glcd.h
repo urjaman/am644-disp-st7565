@@ -31,10 +31,7 @@ void drawline(struct drawdata *d,
 	      uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, 
 	      uint8_t color);
 
-void drawbitmap(struct drawdata *d, uint8_t x, uint8_t y, 
-		const PGM_P bitmap, uint8_t w, uint8_t h,
-		uint8_t color);
-
 void drawcircle(struct drawdata *d, uint8_t x0, uint8_t y0, uint8_t r,uint8_t color);
 
 void fillrect(struct drawdata *d,uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color);
+

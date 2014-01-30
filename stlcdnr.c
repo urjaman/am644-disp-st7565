@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <util/delay.h>
 #include <stdlib.h>
 #include <string.h>
-
+// These only for debug
 #include "console.h"
 #include "uart.h"
 
@@ -202,7 +202,7 @@ void st7565_set_contrast(uint8_t val)
 static void st7565_gotoxy(uint8_t x, uint8_t y) /* This is the hardware gotoxy */
 {
 	const uint8_t pagemap[] = { 3, 2, 1, 0, 7, 6, 5, 4 };
-	uint8_t cs = 1+(LCD_CHARW*x); /* Test if this 1 is needed or if an additional st7565_data(0xff) is needed. */
+	uint8_t cs = 1+(LCD_CHARW*x);
 	st7565_command(CMD_SET_PAGE | pagemap[y]);
 	spiwrite(CMD_SET_COLUMN_LOWER | (cs & 0xf));
 	spiwrite(CMD_SET_COLUMN_UPPER | ((cs >> 4) & 0xf));
