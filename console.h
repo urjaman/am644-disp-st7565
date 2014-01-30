@@ -1,7 +1,7 @@
 /*
- * This file is part of the frser-atmega644 project.
+ * This file is part of the am644-disp project.
  *
- * Copyright (C) 2013 Urja Rannikko <urjaman@gmail.com>
+ * Copyright (C) 2013,2014 Urja Rannikko <urjaman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,4 +25,5 @@ unsigned char* scanfor_notspace(unsigned char *buf);
 unsigned char* scanfor_space(unsigned char *buf);
 void tokenize(unsigned char *rcvbuf,unsigned char** ptrs, unsigned char* tkcntptr);
 
+// Disable this to disable the LCD debug output - i know it should be named better
 #define SENDSTR(x) sendstr_P(PSTR(x))

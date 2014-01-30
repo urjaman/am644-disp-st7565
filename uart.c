@@ -1,5 +1,5 @@
 /*
- * This file is part of the frser-atmega644 project.
+ * This file is part of the am644-disp project.
  *
  * Copyright (C) 2009,2011,2013 Urja Rannikko <urjaman@gmail.com>
  *
@@ -20,7 +20,6 @@
 
 #include "main.h"
 #include "uart.h"
-#include "flash.h"
 
 /* This is 2s of our 16-bit timer. */
 #define UART_TIMEOUT (F_CPU/512)
@@ -79,7 +78,8 @@ static void uart_waiting(void) {
 	/* Since we have no timer interrupt ticking in the background, we currently
 	   cant go to sleep while waiting for UART data and have our no-data timeout work.
 	   I'm too lazy to fix this (since it is only a power usage thing...) */
-	uint8_t iclk = flash_idle_clock();
+	//uint8_t iclk = flash_idle_clock(); // Disabled old flasher API thingy
+	const uint8_t iclk = 0;
 	if (uart_timeout_jmp) {
 		uint16_t v = TCNT1;
 		if (v>UART_TIMEOUT) {

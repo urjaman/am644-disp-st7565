@@ -1,7 +1,7 @@
 /*
- * This file is part of the frser-atmega644 project.
+ * This file is part of the am644-disp project.
  *
- * Copyright (C) 2013 Urja Rannikko <urjaman@gmail.com>
+ * Copyright (C) 2013,2014 Urja Rannikko <urjaman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,5 +32,6 @@ void calc_cmd(void);
 void bljump_cmd(void);
 void lcdr_cmd(void);
 void lcdbr_cmd(void);
-void testdrawchar_cmd(void);
 void lcdw_cmd(void);
+void lcdc_cmd(void);
+void lcdbg_cmd(void);

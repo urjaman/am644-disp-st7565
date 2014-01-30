@@ -1,7 +1,7 @@
 /*
- * This file is part of the frser-atmega644 project.
+ * This file is part of the am644-disp project.
  *
- * Copyright (C) 2013 Urja Rannikko <urjaman@gmail.com>
+ * Copyright (C) 2013,2014 Urja Rannikko <urjaman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 #include "uart.h"
 #include "console.h"
 #include "ciface.h"
-#include "frser.h"
 
 #define CR 0x0D
 #define LF 0x0A
@@ -35,9 +34,12 @@ uint8_t getline(unsigned char *buf, unsigned char len) {
 	unsigned char val,i;
 	memset(buf,0,len);
 	for(i=0;i<len;i++) {
+#if 0
+		// Enable this if you need to re-activate the binary IF (fix the command bytes)
 		val = PEEK();
 		if ((val==S_CMD_NOP)||(val==S_CMD_Q_IFACE)||
 			(val==S_CMD_SYNCNOP)) return 1; // EXIT
+#endif
 		val = RECEIVE();
 		if (((val == BS)||(val == DEL))&&(i)) { SEND(BS); SEND(SPACE); SEND(BS); i = i-2; continue; }; // Understand BS or DEL
 		if (val == CR) { SEND(CR); SEND(LF); buf[i] = 0; break; }; // Understand LF

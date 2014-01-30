@@ -1,5 +1,5 @@
 /*
- * This file is part of the frser-atmega644 project.
+ * This file is part of the am644-disp project.
  *
  * Copyright (C) 2010,2011 Urja Rannikko <urjaman@gmail.com>
  *
@@ -33,7 +33,7 @@ uint8_t uart_peek(void);
 #define PEEK() uart_peek()
 #define RECEIVE() uart_recv()
 #define SEND(n) uart_send(n)
-#define UART_BUFLEN 1280
+#define UART_BUFLEN 32
 // At high speed polled TX is faster than interrupt TX
 #if BAUD > 115200
 #define UART_POLLED_TX
@@ -42,5 +42,5 @@ uint8_t uart_peek(void);
 #ifdef UART_POLLED_TX
 #define UARTTX_BUFLEN 0
 #else
-#define UARTTX_BUFLEN 248
+#define UARTTX_BUFLEN 32
 #endif

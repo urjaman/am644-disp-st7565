@@ -1,5 +1,5 @@
 /*
- * This file is part of the frser-atmega644 project.
+ * This file is part of the am644-disp project.
  *
  * Copyright (C) 2010 Urja Rannikko <urjaman@gmail.com>
  *

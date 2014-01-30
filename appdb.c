@@ -1,7 +1,7 @@
 /*
- * This file is part of the frser-atmega644 project.
+ * This file is part of the am644-disp project.
  *
- * Copyright (C) 2013 Urja Rannikko <urjaman@gmail.com>
+ * Copyright (C) 2013,2014 Urja Rannikko <urjaman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ const unsigned char lcdistr[] PROGMEM = "LINIT";
 const unsigned char lcdcstr[] PROGMEM = "LCHAR";
 const unsigned char lcdbrstr[] PROGMEM = "LBRI";
 const unsigned char lcdwstr[] PROGMEM = "LW";
+const unsigned char lcdbgstr[] PROGMEM = "LBG";
+
 const unsigned char calcstr[] PROGMEM = "CALC";
 const unsigned char helpstr[] PROGMEM = "?";
 
@@ -36,9 +38,10 @@ const struct command_t appdb[] PROGMEM = {
 	{(PGM_P)echostr, &(echo_cmd)},
 	{(PGM_P)bljumpstr, &(bljump_cmd)},
 	{(PGM_P)lcdistr, &(lcdr_cmd)},
-	{(PGM_P)lcdcstr, &(testdrawchar_cmd)},
+	{(PGM_P)lcdcstr, &(lcdc_cmd)},
 	{(PGM_P)lcdbrstr, &(lcdbr_cmd)},
 	{(PGM_P)lcdwstr, &(lcdw_cmd)},
+	{(PGM_P)lcdbgstr, &(lcdbg_cmd)},
 	{(PGM_P)calcstr, &(calc_cmd)},
 	{(PGM_P)helpstr, &(help_cmd)},
 	{NULL,NULL}

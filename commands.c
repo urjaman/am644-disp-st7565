@@ -1,7 +1,7 @@
 /*
- * This file is part of the frser-atmega644 project.
+ * This file is part of the am644-disp project.
  *
- * Copyright (C) 2013 Urja Rannikko <urjaman@gmail.com>
+ * Copyright (C) 2013,2014 Urja Rannikko <urjaman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
 #include "console.h"
 #include "lib.h"
 #include "appdb.h"
-#include "flash.h"
 #include "ciface.h"
+#include "glcd.h"
 
 static void sendcrlf(void) {
 	sendstr_P(PSTR("\r\n"));
@@ -38,36 +38,58 @@ void echo_cmd(void) {
 	}
 }
 
-#define XWMAX 128
-void st_drawstr(uint8_t x, uint8_t line, uint8_t *c);
-void lcdw_cmd(void) {
-	if (token_count >= 2) {
-		uint8_t x = astr2luint(tokenptrs[1]);
-		uint8_t line = astr2luint(tokenptrs[2]);
+void lcdw_cmd(void)
+{
+	if (token_count >= 3) {
+		uint8_t y = astr2luint(tokenptrs[1]);	
+		uint8_t x = astr2luint(tokenptrs[2]);
+		lcd_gotoxy(x,y);
 		for (uint8_t i=3;i<token_count;i++) {
-			uint8_t buf[32];
-			strcpy((char*)buf, tokenptrs[i]);
-			strcat((char*)buf, " ");
-			st_drawstr(x,line,tokenptrs[i]);
-			x += strlen((char*)buf)*6;
-			if (x >= XWMAX) {
-				line++;
-				x -= XWMAX;
-			}
+			lcd_puts(tokenptrs[i]);
+			lcd_putchar(' ');
 		}
+		
 	}
 }
-void setup(void);
-void lcdr_cmd(void) {
-	setup();
+
+void lcdr_cmd(void)
+{
+	lcd_init();
 }
 
-void st7565_set_brightness(uint8_t val);
 void lcdbr_cmd(void) {
 	if (token_count >= 2) {
 		uint32_t val = astr2luint(tokenptrs[1]);
 		if (val>63) return;
-		st7565_set_brightness(val);
+		st7565_set_contrast(val);
+	}
+}
+
+void lcdbg_cmd(void) {
+	if (token_count >= 6) {
+		uint8_t y = astr2luint(tokenptrs[1]);	
+		uint8_t x = astr2luint(tokenptrs[2]);
+		uint8_t h = astr2luint(tokenptrs[3]);	
+		uint8_t w = astr2luint(tokenptrs[4]);
+		uint8_t f = astr2luint(tokenptrs[5]);
+		struct drawdata *dd;
+		make_drawdata(dd,w,h);
+		drawrect(dd,0,0,w*LCD_CHARW,h*LCD_CHARH,1);
+		fillrect(dd,0,0,f,h*LCD_CHARH,1);
+		lcd_gotoxy(x,y);
+		lcd_write_block(dd->d,w,h);
+	}
+}
+
+void lcdc_cmd(void)
+{
+	for (uint8_t y=0;y<6;y++) {
+		lcd_gotoxy(0,y);
+		for (uint8_t i=0;i<LCD_MAXX;i++) lcd_putchar(i+(y*16)+32);
+	}
+	for (uint8_t y=6;y<8;y++) {
+		lcd_gotoxy(0,y);
+		for (uint8_t i=0;i<LCD_MAXX;i++) lcd_putchar(i+((y-6)*16)+0xA0);
 	}
 }
 
@@ -198,53 +220,9 @@ void help_cmd(void) {
 }
 
 
-// Returns Vendor (LOW) and Device (High) ID
-unsigned int identify_flash(void) {
-	return 0;
-}
-
-
-void flash_readsect_cmd(void) {
-}
-
-
-void flash_proto_cmd(void) {
-}
-
-void flash_idchip_cmd(void) {
-}
-
-static void sendstr_no(void) {
-	sendstr_P(PSTR(" NO"));
-}	
-
-void spi_id_cmd(void) {
-}	
-
-static void print_bool(uint8_t v) {
-	if (v) sendstr_P(PSTR("TRUE"));
-	else sendstr_P(PSTR("FALSE"));
-}
-
-void spi_test_cmd(void) {
-}
-
-void par_test_cmd(void) {
-}
-
-void lpc_test_cmd(void) {
-}
-
-void fwh_test_cmd(void) {
-}
 
 void bljump_cmd(void) {
 	void (*btloader)(void)	= (void*)(BTLOADERADDR>>1); // Make PM
 	_delay_ms(100);
 	btloader();
-}
-
-
-void flash_sproto_cmd(void)
-{
 }

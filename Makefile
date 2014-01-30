@@ -1,5 +1,5 @@
 ##
-## This file is part of the frser-atmega644 project.
+## This file is part of the am644-disp project.
 ##
 ## Copyright (C) 2010,2011 Urja Rannikko <urjaman@gmail.com>
 ##
@@ -18,10 +18,10 @@
 ## Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 ##
 
-PROJECT=frser-atmega644
-DEPS=uart.h frser.h udelay.h main.h flash.h
-CIFACE_SOURCES=ciface.c console.c lib.c appdb.c commands.c glcd.c glcdfont.c stlcd.c util.c
-SOURCES=main.c uart.c flash.c udelay.c frser.c  $(CIFACE_SOURCES)
+PROJECT=am644-disp
+DEPS=uart.h main.h stlcdnr.h stlcdhw.h
+CIFACE_SOURCES=ciface.c console.c lib.c appdb.c commands.c glcd.c stlcdnr.c
+SOURCES=main.c uart.c $(CIFACE_SOURCES)
 CC=avr-gcc
 LD=avr-ld
 OBJCOPY=avr-objcopy

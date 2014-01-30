@@ -1,7 +1,7 @@
-frser-atmega644
+am644-disp
 ===============
 
-Flashrom serprog device code for my ATmega644p + FTDI232R thingy.
+ST7565 LCD "demo".
 
-See http://urjaman.dyndns.info/usbavrprog for more info on this thingy.
+Board is my ATmega644p + FTDI232R thingy originally made for flashrom/ BIOS flash chip flashing
 
