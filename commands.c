@@ -26,9 +26,11 @@
 #include "ciface.h"
 #include "glcd.h"
 
+#if 0
 static void sendcrlf(void) {
 	sendstr_P(PSTR("\r\n"));
 }
+#endif
 
 void echo_cmd(void) {
 	unsigned char i;
@@ -65,6 +67,15 @@ void lcdbr_cmd(void) {
 	}
 }
 
+static void bargraph(uint8_t x, uint8_t y, uint8_t h, uint8_t w, uint8_t f) {
+	struct drawdata *dd;
+	make_drawdata(dd,w,h);
+	drawrect(dd,0,0,w*LCD_CHARW,h*LCD_CHARH,1);
+	fillrect(dd,0,0,f,h*LCD_CHARH,1);
+	lcd_gotoxy(x,y);
+	lcd_write_block(dd->d,w,h);
+}
+
 void lcdbg_cmd(void) {
 	if (token_count >= 6) {
 		uint8_t y = astr2luint(tokenptrs[1]);	
@@ -72,13 +83,33 @@ void lcdbg_cmd(void) {
 		uint8_t h = astr2luint(tokenptrs[3]);	
 		uint8_t w = astr2luint(tokenptrs[4]);
 		uint8_t f = astr2luint(tokenptrs[5]);
-		struct drawdata *dd;
-		make_drawdata(dd,w,h);
-		drawrect(dd,0,0,w*LCD_CHARW,h*LCD_CHARH,1);
-		fillrect(dd,0,0,f,h*LCD_CHARH,1);
-		lcd_gotoxy(x,y);
-		lcd_write_block(dd->d,w,h);
+		bargraph(x,y,h,w,f);
 	}
+}
+
+void luint2outdual(unsigned long int val) {
+	unsigned char buf[11];
+	luint2str(buf,val);
+	sendstr(buf);
+	sendstr_P(PSTR(" ("));
+	luint2xstr(buf,val);
+	sendstr(buf);
+	sendstr_P(PSTR("h) "));
+}
+
+
+void lbench_cmd(void) {
+	uint16_t start = TCNT1;
+	struct drawdata *dd;
+	make_drawdata(dd,LCD_MAXX,LCD_MAXY);
+	drawrect(dd,0,0,LCD_MAXX*LCD_CHARW,LCD_MAXY*LCD_CHARH,1);
+	fillrect(dd,0,0,32,LCD_MAXY*LCD_CHARH,1);
+	for (uint8_t i=0;i<=32;i++) {
+		lcd_gotoxy(0,0);
+		lcd_write_block(dd->d,LCD_MAXX,LCD_MAXY);
+	}
+	uint16_t passed = TCNT1 - start;
+	luint2outdual(passed);
 }
 
 void lcdc_cmd(void)
@@ -128,15 +159,6 @@ unsigned long int calc_opdo(unsigned long int val1, unsigned long int val2, unsi
 	return val1;
 }
 
-void luint2outdual(unsigned long int val) {
-	unsigned char buf[11];
-	luint2str(buf,val);
-	sendstr(buf);
-	sendstr_P(PSTR(" ("));
-	luint2xstr(buf,val);
-	sendstr(buf);
-	sendstr_P(PSTR("h) "));
-}
 
 unsigned long int closureparser(unsigned char firsttok, unsigned char*ptr) {
 	unsigned char *op=NULL;

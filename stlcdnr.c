@@ -28,15 +28,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <util/delay.h>
 #include <stdlib.h>
 #include <string.h>
+// These are ST library stuff (keep these)
+#include "stlcdhw.h"
+#include "stlcdnr.h"
 // These only for debug
 #include "console.h"
 #include "uart.h"
 
-#include "stlcdhw.h"
-#include "stlcdnr.h"
-
 
 /* HW config. */
+/* Note: The code is currently setup for SCLK_PORT == SID_PORT. */
+/* See the #if 0 below for code if you need SCLK_PORT != SID_PORT. */
+
 #define SID_DDR DDRA
 #define SID_PIN PINA
 #define SID_PORT PORTA
@@ -153,6 +156,8 @@ static void st7565_init(void) {
 
 }
 
+#if 0
+// Compatible version 
 static void spiwrite(uint8_t c) {
   int8_t i;
   for (i=7; i>=0; i--) {
@@ -165,9 +170,55 @@ static void spiwrite(uint8_t c) {
     nop;
     SCLK_PORT |= _BV(SCLK);
     nop;
-    nop;
   }
 }
+#else
+#define bld(to,bit_to) bld2(to,bit_to)
+#define bst(from,bit_from) bst2(from,bit_from)
+#define bld2(to,bit_to) asm("bld %0, " #bit_to "\n\t" : "+r" (to) :)
+#define bst2(from,bit_from) asm("bst %0, " #bit_from "\n\t" :: "r" (from))
+
+// This code should be ok for F_CPU <= 16Mhz (because LCD max 4Mhz)
+// Provides F = F_CPU/4, 50/50 duty cycle, tested with F_CPU = 12Mhz
+// Assumes SCLK_PORT == SID_PORT.
+static void spiwrite(uint8_t c) {
+  uint8_t p = SID_PORT & ~_BV(SCLK);
+  bst(c,7);
+  bld(p,SID);
+  SID_PORT = p;
+  bst(c,6);
+  SCLK_PORT |= _BV(SCLK);
+  bld(p,SID);
+  SID_PORT = p;
+  bst(c,5);
+  SCLK_PORT |= _BV(SCLK);
+  bld(p,SID);
+  SID_PORT = p;
+  bst(c,4);
+  SCLK_PORT |= _BV(SCLK);
+  bld(p,SID);
+  SID_PORT = p;
+  bst(c,3);
+  SCLK_PORT |= _BV(SCLK);
+  bld(p,SID);
+  SID_PORT = p;
+  bst(c,2);
+  SCLK_PORT |= _BV(SCLK);
+  bld(p,SID);
+  SID_PORT = p;
+  bst(c,1);
+  SCLK_PORT |= _BV(SCLK);
+  bld(p,SID);
+  SID_PORT = p;
+  bst(c,0);
+  SCLK_PORT |= _BV(SCLK);
+  bld(p,SID);
+  SID_PORT = p;
+  nop;
+  SCLK_PORT |= _BV(SCLK);
+}
+#endif
+
 
 static void st7565_command(uint8_t c) {
   A0_PORT &= ~_BV(A0);
@@ -232,7 +283,7 @@ void lcd_write_block(const uint8_t *buffer, uint8_t w, uint8_t h)
 {
 	uint8_t ye = lcd_char_y+h;
 	uint8_t we = (lcd_char_x+w)*LCD_CHARW;
-	if (we > (LCD_CHARW*LCD_MAXX)) return;;
+	if (we > (LCD_CHARW*LCD_MAXX)) return;
 	if (ye > LCD_MAXY) ye = LCD_MAXY; /* This can be safely clipped... */
 	for (uint8_t y=lcd_char_y;y<ye;y++) {
 		st7565_gotoxy(lcd_char_x,y);

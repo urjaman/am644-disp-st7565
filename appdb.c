@@ -30,7 +30,7 @@ const unsigned char lcdcstr[] PROGMEM = "LCHAR";
 const unsigned char lcdbrstr[] PROGMEM = "LBRI";
 const unsigned char lcdwstr[] PROGMEM = "LW";
 const unsigned char lcdbgstr[] PROGMEM = "LBG";
-
+const unsigned char lbenchstr[] PROGMEM = "LBENCH";
 const unsigned char calcstr[] PROGMEM = "CALC";
 const unsigned char helpstr[] PROGMEM = "?";
 
@@ -42,6 +42,7 @@ const struct command_t appdb[] PROGMEM = {
 	{(PGM_P)lcdbrstr, &(lcdbr_cmd)},
 	{(PGM_P)lcdwstr, &(lcdw_cmd)},
 	{(PGM_P)lcdbgstr, &(lcdbg_cmd)},
+	{(PGM_P)lbenchstr, &(lbench_cmd)},
 	{(PGM_P)calcstr, &(calc_cmd)},
 	{(PGM_P)helpstr, &(help_cmd)},
 	{NULL,NULL}
