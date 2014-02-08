@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  // some of this code was written by <cstone@pobox.com> originally; it is in the public domain.
 */
 #include "main.h" // Most important: define F_CPU
-#include <avr/pgmspace.h> 
+#include <avr/pgmspace.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
@@ -120,7 +120,7 @@ static void st7565_init(void) {
   A0_DDR |= _BV(A0);
   RST_DDR |= _BV(RST);
   CS_DDR |= _BV(CS);
-  
+
   // toggle RST low to reset; CS low so it'll listen to us
   CS_PORT &= ~_BV(CS);
   RST_PORT &= ~_BV(RST);
@@ -157,7 +157,7 @@ static void st7565_init(void) {
 }
 
 #if 0
-// Compatible version 
+// Compatible version
 static void spiwrite(uint8_t c) {
   int8_t i;
   for (i=7; i>=0; i--) {

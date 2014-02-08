@@ -25,6 +25,7 @@
 #include "appdb.h"
 #include "ciface.h"
 #include "glcd.h"
+#include "rgbbl.h"
 
 #if 0
 static void sendcrlf(void) {
@@ -54,6 +55,16 @@ void lcdw_cmd(void)
 	}
 }
 
+void blset_cmd(void)
+{
+    if (token_count >= 3) {
+        uint8_t r = astr2luint(tokenptrs[1]);
+        uint8_t g = astr2luint(tokenptrs[2]);
+        uint8_t b = astr2luint(tokenptrs[3]);
+        rgbbl_set(r,g,b);
+    }
+}
+
 void lcdr_cmd(void)
 {
 	lcd_init();
@@ -75,6 +86,30 @@ static void bargraph(uint8_t x, uint8_t y, uint8_t h, uint8_t w, uint8_t f) {
 	lcd_gotoxy(x,y);
 	lcd_write_block(dd->d,w,h);
 }
+
+void lgfxt_cmd(void) {
+    struct drawdata *dd;
+    make_drawdata(dd,LCD_MAXX,LCD_MAXY);
+    uint8_t xc = dd->w/2;
+    uint8_t yc = dd->h/2;
+    fillrect(dd,1,1,6,6,1);
+    fillrect(dd,120,0,8,8,1);
+    fillrect(dd,121,1,6,6,0);
+    drawline(dd,7,9,1,63,1);
+    drawline(dd,1,63,127,57,1);
+    drawline(dd,1,57,127,63,1);
+    drawline(dd,121,9,127,63,1);
+    fillcircle(dd,xc,yc,3,1);
+    drawcircle(dd,xc,yc,5,1);
+    drawcircle(dd,xc,yc,8,1);
+    drawcircle(dd,xc,yc,11,1);
+    drawcircle(dd,xc,yc,14,1);
+    drawcircle(dd,xc,yc,17,1);
+    drawcircle(dd,xc,yc,20,1);
+    lcd_gotoxy(0,0);
+    lcd_write_block(dd->d,LCD_MAXX,LCD_MAXY);
+}
+
 
 void lcdbg_cmd(void) {
 	if (token_count >= 6) {
@@ -100,13 +135,8 @@ void luint2outdual(unsigned long int val) {
 
 void lbench_cmd(void) {
 	uint16_t start = TCNT1;
-	struct drawdata *dd;
-	make_drawdata(dd,LCD_MAXX,LCD_MAXY);
-	drawrect(dd,0,0,LCD_MAXX*LCD_CHARW,LCD_MAXY*LCD_CHARH,1);
-	fillrect(dd,0,0,32,LCD_MAXY*LCD_CHARH,1);
 	for (uint8_t i=0;i<=32;i++) {
-		lcd_gotoxy(0,0);
-		lcd_write_block(dd->d,LCD_MAXX,LCD_MAXY);
+		bargraph(0,0,LCD_MAXY,LCD_MAXX,i*4);
 	}
 	uint16_t passed = TCNT1 - start;
 	luint2outdual(passed);

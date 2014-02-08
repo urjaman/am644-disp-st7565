@@ -21,15 +21,17 @@
 #include "main.h"
 #include "uart.h"
 #include "ciface.h"
+#include "rgbbl.h"
 static void mainloop(void);
 
 int main(void) {
 	cli();
 	uart_init();
 	power_adc_disable();
-	power_timer0_disable();
-	power_timer2_disable();
+	power_timer0_enable();
+	power_timer2_enable();
 	power_twi_disable();
+	rgbbl_init();
 	mainloop();
 }
 

@@ -19,9 +19,9 @@
 ##
 
 PROJECT=am644-disp
-DEPS=uart.h main.h stlcdnr.h stlcdhw.h
+DEPS=uart.h main.h stlcdnr.h stlcdhw.h rgbbl.h
 CIFACE_SOURCES=ciface.c console.c lib.c appdb.c commands.c glcd.c stlcdnr.c
-SOURCES=main.c uart.c $(CIFACE_SOURCES)
+SOURCES=main.c uart.c rgbbl.c $(CIFACE_SOURCES)
 CC=avr-gcc
 LD=avr-ld
 OBJCOPY=avr-objcopy
@@ -37,6 +37,10 @@ CFLAGS=-mmcu=$(MMCU) -Os -mcall-prologues -Wl,--relax -fno-inline-small-function
 
 
 all: $(PROJECT).out
+
+glcd-test: glcd-test.c glcd.c glcd.h
+	gcc -O0 -std=gnu99 -DTEST -o glcd-test glcd-test.c glcd.c
+
 
 $(PROJECT).hex: $(PROJECT).out
 	$(AVRBINDIR)$(OBJCOPY) -j .text -j .data -O ihex $(PROJECT).out $(PROJECT).hex
@@ -100,3 +104,5 @@ serialprogrammer: serialprogrammer.c
 
 objdump: $(PROJECT).out
 	$(AVRBINDIR)avr-objdump -xd $(PROJECT).out | less
+
+

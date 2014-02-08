@@ -36,3 +36,5 @@ void lcdw_cmd(void);
 void lcdc_cmd(void);
 void lcdbg_cmd(void);
 void lbench_cmd(void);
+void lgfxt_cmd(void);
+void blset_cmd(void);
