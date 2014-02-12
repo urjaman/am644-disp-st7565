@@ -1,4 +1,6 @@
 /* This is the external API */
+#define LCDWIDTH 128
+#define LCDHEIGHT 64
 #define LCD_MAXX 16
 #define LCD_MAXY 8
 #define LCD_CHARW 8
@@ -10,6 +12,8 @@ void lcd_puts(const unsigned char* str);
 void lcd_puts_P(PGM_P str);
 void lcd_clear(void);
 void lcd_gotoxy(uint8_t x, uint8_t y);
+
+uint8_t lcd_puts_dyn(const unsigned char *str);
 
 /* Buffer should be w*h*LCD_CHARW bytes big. */
 void lcd_write_block_P(const PGM_P buffer, uint8_t w, uint8_t h);

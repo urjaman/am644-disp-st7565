@@ -33,6 +33,17 @@ static void sendcrlf(void) {
 }
 #endif
 
+
+void luint2outdual(unsigned long int val) {
+	unsigned char buf[11];
+	luint2str(buf,val);
+	sendstr(buf);
+	sendstr_P(PSTR(" ("));
+	luint2xstr(buf,val);
+	sendstr(buf);
+	sendstr_P(PSTR("h) "));
+}
+
 void echo_cmd(void) {
 	unsigned char i;
 	for (i=1;i<token_count;i++) {
@@ -55,6 +66,26 @@ void lcdw_cmd(void)
 	}
 }
 
+void ldw_cmd(void)
+{
+	if (token_count >= 3) {
+		uint8_t y = astr2luint(tokenptrs[1]);	
+		uint8_t x = astr2luint(tokenptrs[2]);
+		lcd_gotoxy(x,y);
+		int buflen = 0;
+		for (uint8_t i=3;i<token_count;i++) {
+		    buflen += strlen((char*)tokenptrs[i])+1;
+		}
+        unsigned char *buf = alloca(buflen);
+        buf[0] = 0;
+		for (uint8_t i=3;i<token_count;i++) {
+		    strcat((char*)buf,(char*)tokenptrs[i]);
+		    strcat((char*)buf," ");
+		}
+        lcd_puts_dyn(buf);
+	}
+}
+
 void blset_cmd(void)
 {
     if (token_count >= 3) {
@@ -64,6 +95,65 @@ void blset_cmd(void)
         rgbbl_set(r,g,b);
     }
 }
+
+
+unsigned char tgt_red;
+unsigned char tgt_green;
+unsigned char tgt_blue;
+
+
+static unsigned char fadechan(unsigned char current, unsigned char target)
+{
+	if (current != target) {
+		unsigned char change = current / 16; // Tota voi tuunata...
+		if (!change) change = 1;
+		unsigned char diff;
+		if (current < target) {
+			diff = target - current;
+			if (diff < change) change = diff;
+			current += change;
+		} else {
+			diff = current - target;
+			if (diff < change) change = diff;
+			current -= change;
+		}
+	}
+	return current;
+}
+
+static unsigned char cur_red = 0;
+static unsigned char cur_green = 0;
+static unsigned char cur_blue = 0;
+
+void fader(void) {
+	// Funktion sisällä static meinaa että se alustetaan vain kerran ja muistetaan
+	// myöhemmillä kutsuilla. En mä tätä normaalisti kommentois, mutta...
+	cur_red = fadechan(cur_red, tgt_red);
+	cur_green = fadechan(cur_green, tgt_green);
+	cur_blue = fadechan(cur_blue, tgt_blue);
+	rgbbl_set(cur_red, cur_green, cur_blue);
+	_delay_ms(4); // Hidastaa että joku näkeeki jotain.
+}
+
+void fader_cmd(void) {
+	if (token_count >= 7) {
+	        cur_red = astr2luint(tokenptrs[4]);
+	        cur_green = astr2luint(tokenptrs[5]);
+	        cur_blue = astr2luint(tokenptrs[6]);
+	}
+	if (token_count >= 4) {
+	        tgt_red = astr2luint(tokenptrs[1]);
+	        tgt_green = astr2luint(tokenptrs[2]);
+	        tgt_blue = astr2luint(tokenptrs[3]);
+	}
+	unsigned int loops = 0;
+	while ((cur_red != tgt_red) || (cur_green != tgt_green) || (cur_blue != tgt_blue)) {
+		fader();
+		loops++;
+	}
+	luint2outdual(loops);
+}
+
 
 void lcdr_cmd(void)
 {
@@ -122,15 +212,6 @@ void lcdbg_cmd(void) {
 	}
 }
 
-void luint2outdual(unsigned long int val) {
-	unsigned char buf[11];
-	luint2str(buf,val);
-	sendstr(buf);
-	sendstr_P(PSTR(" ("));
-	luint2xstr(buf,val);
-	sendstr(buf);
-	sendstr_P(PSTR("h) "));
-}
 
 
 void lbench_cmd(void) {

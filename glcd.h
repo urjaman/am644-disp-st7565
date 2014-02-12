@@ -1,5 +1,3 @@
-#define LCDWIDTH 128
-#define LCDHEIGHT 64
 
 #ifdef TEST
 #define PGM_P char*

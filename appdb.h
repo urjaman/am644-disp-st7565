@@ -38,3 +38,5 @@ void lcdbg_cmd(void);
 void lbench_cmd(void);
 void lgfxt_cmd(void);
 void blset_cmd(void);
+void ldw_cmd(void);
+void fader_cmd(void);

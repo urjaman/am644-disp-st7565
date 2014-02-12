@@ -93,8 +93,8 @@ void lcd_init(void)
     SENDSTR("DISPLAY_ON\r\n");
     st7565_command(CMD_SET_ALLPTS_NORMAL);
     SENDSTR("ALLPTS_NORMAL\r\n");
-    st7565_set_contrast(0x16);
-    SENDSTR("CONTRAST 0X16\r\n");
+    st7565_set_contrast(0x18);
+    SENDSTR("CONTRAST 0X18\r\n");
     lcd_clear();
     SENDSTR("LCD_INIT DONE\r\n");
 }
@@ -253,7 +253,7 @@ void st7565_set_contrast(uint8_t val)
 static void st7565_gotoxy(uint8_t x, uint8_t y) /* This is the hardware gotoxy */
 {
 	const uint8_t pagemap[] = { 3, 2, 1, 0, 7, 6, 5, 4 };
-	uint8_t cs = 1+(LCD_CHARW*x);
+	uint8_t cs = 1+x;
 	st7565_command(CMD_SET_PAGE | pagemap[y]);
 	spiwrite(CMD_SET_COLUMN_LOWER | (cs & 0xf));
 	spiwrite(CMD_SET_COLUMN_UPPER | ((cs >> 4) & 0xf));
@@ -263,54 +263,49 @@ static void st7565_gotoxy(uint8_t x, uint8_t y) /* This is the hardware gotoxy *
 void lcd_write_block_P(const PGM_P buffer, uint8_t w, uint8_t h)
 {
 	uint8_t ye = lcd_char_y+h;
-	uint8_t we = (lcd_char_x+w)*LCD_CHARW;
+	uint8_t we = lcd_char_x+w;
 	if (we > (LCD_CHARW*LCD_MAXX)) return; /* Dont waste time writing clipped stuff (this would break lines if we clipped). */
 	if (ye > LCD_MAXY) ye = LCD_MAXY; /* This can be safely clipped... */
 	for (uint8_t y=lcd_char_y;y<ye;y++) {
 		st7565_gotoxy(lcd_char_x,y);
-		for (uint8_t x=lcd_char_x*LCD_CHARW;x<we;x++) {
+		for (uint8_t x=lcd_char_x;x<we;x++) {
 			uint8_t d = pgm_read_byte(buffer);
 			buffer++;
 			st7565_data(d);
 		}
 	}
 	lcd_char_x += w;
-	if (lcd_char_x > LCD_MAXX) lcd_char_x = LCD_MAXX; /* saturate */
+	if (lcd_char_x > (LCD_MAXX*LCD_CHARW)) lcd_char_x = (LCD_MAXX*LCD_CHARW); /* saturate */
 
 }
 
 void lcd_write_block(const uint8_t *buffer, uint8_t w, uint8_t h)
 {
 	uint8_t ye = lcd_char_y+h;
-	uint8_t we = (lcd_char_x+w)*LCD_CHARW;
+	uint8_t we = lcd_char_x+w;
 	if (we > (LCD_CHARW*LCD_MAXX)) return;
 	if (ye > LCD_MAXY) ye = LCD_MAXY; /* This can be safely clipped... */
 	for (uint8_t y=lcd_char_y;y<ye;y++) {
 		st7565_gotoxy(lcd_char_x,y);
-		for (uint8_t x=lcd_char_x*LCD_CHARW;x<we;x++) {
+		for (uint8_t x=lcd_char_x;x<we;x++) {
 			uint8_t d = *buffer;
 			buffer++;
 			st7565_data(d);
 		}
 	}
 	lcd_char_x += w;
-	if (lcd_char_x > LCD_MAXX) lcd_char_x = LCD_MAXX; /* saturate */
+	if (lcd_char_x > (LCD_MAXX*LCD_CHARW)) lcd_char_x = (LCD_MAXX*LCD_CHARW); /* saturate */
 }
 
-// Font8x8 is generated from the font at https://github.com/dhepper/font8x8 (Public Domain == i dont even need to mention this)
-#include "font8x8.c"
+// mfont8x8.c is generated with https://github.com/urjaman/st7565-fontgen
+#include "mfont8x8.c"
 
 void lcd_putchar(unsigned char c)
 {
 	PGM_P block;
-	if (c>=0xA0) {
-		block = (const char*)&(font8x8_ext[(c-0xA0)*LCD_CHARW]);
-	} else if ((c>= 0x20)&&(c <= 0x7E)) {
-		block = (const char*)&(font8x8_ascii[(c-0x20)*LCD_CHARW]);
-	} else {
-		block = (const char*)font8x8_ascii; // Space
-	}
-	lcd_write_block_P(block,1,1);
+	if (c < 0x20) c = 0x20;
+	block = (const char*)&(st7565_font[c-0x20][0]);
+	lcd_write_block_P(block,LCD_CHARW,1);
 }
 
 void lcd_puts(const unsigned char * str)
@@ -333,3 +328,54 @@ start:
         goto start;
 }
 
+uint8_t lcd_puts_dyn(const unsigned char *str)
+{
+#if 0
+    // I tried out a freetype-generated variable-width fontdata but the result was butt ugly.
+    // That is really only a fail of the fontdata & freetype, not this code, so I'll leave
+    // This here so i can reuse it if i want to make a variable-width font later.
+    // I'm actually thinking of just adding xoff/xadw/draw-width data for the mfont8x8...
+    // Somebody would just need to fiddle that ...
+    int allocation = strlen((char*)str)*GLYPH_MAXW;
+    if (allocation > (LCDWIDTH-(int)lcd_char_x)) allocation = LCDWIDTH-(int)lcd_char_x;
+    if (allocation < 1) return 0;
+    uint8_t u8alloca = allocation;
+    uint8_t *drawbuf = alloca(u8alloca);
+    memset(drawbuf,0,u8alloca);
+    uint8_t pen_x = 0;
+    uint8_t dxw = 0;
+    while (*str) {
+        uint8_t c = *str++;
+        const struct st7565_glyph * gp;
+        if (c>=0xA0) {
+            gp = &(glyph_extd[c-0xA0]);
+        } else if ((c >= 0x20) && (c <= 0x7E)) {
+            gp = &(glyph_ascii[c-0x20]);
+        } else {
+            continue;
+        }
+        const uint8_t* glyphblock = &(gp->glyph[0]);
+        uint8_t gwidth = pgm_read_byte(&(gp->gwidth));
+        int8_t xoff = pgm_read_byte(&(gp->xoff));
+        uint8_t xadw = pgm_read_byte(&(gp->xadw));
+        uint8_t pdx = 0;
+        if ((((int)pen_x)+xoff) >= 0) pdx = pen_x+xoff;
+        for (uint8_t i=0;i<gwidth;i++) {
+            uint8_t dx = pdx+i;
+            if (dx < u8alloca) {
+                if (dx>=dxw) dxw = dx+1;
+                drawbuf[dx] |= pgm_read_byte(glyphblock);
+                glyphblock++;
+            } else {
+                break;
+            }
+        }
+        pen_x += xadw;
+        if (pen_x >= u8alloca) break;
+    }
+    lcd_write_block(drawbuf,dxw,1);
+    return dxw;
+#else
+    return 0;
+#endif
+}
