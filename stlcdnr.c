@@ -99,11 +99,19 @@ void lcd_init(void)
     SENDSTR("LCD_INIT DONE\r\n");
 }
 
-void lcd_gotoxy(uint8_t x, uint8_t y)
+void lcd_gotoxy_nt(uint8_t x, uint8_t y)
 {
+    if (x >= LCDWIDTH) x=LCDWIDTH-1;
+    if (y >= LCD_MAXY) y=LCD_MAXY-1;
     lcd_char_x = x;
     lcd_char_y = y;
 }
+
+void lcd_gotoxy(uint8_t x, uint8_t y)
+{
+    lcd_gotoxy_nt(LCD_CHARW*x,y);
+}
+
 
 void lcd_clear(void)
 {
@@ -124,7 +132,7 @@ static void st7565_init(void) {
   // toggle RST low to reset; CS low so it'll listen to us
   CS_PORT &= ~_BV(CS);
   RST_PORT &= ~_BV(RST);
-  _delay_ms(500);
+  _delay_ms(50);
   RST_PORT |= _BV(RST);
 
   // LCD bias select
@@ -181,6 +189,7 @@ static void spiwrite(uint8_t c) {
 // This code should be ok for F_CPU <= 16Mhz (because LCD max 4Mhz)
 // Provides F = F_CPU/4, 50/50 duty cycle, tested with F_CPU = 12Mhz
 // Assumes SCLK_PORT == SID_PORT.
+// Note: if you have an ISR that touches this port, cli() this sequence.
 static void spiwrite(uint8_t c) {
   uint8_t p = SID_PORT & ~_BV(SCLK);
   bst(c,7);
@@ -232,7 +241,7 @@ static void st7565_data(uint8_t c) {
 
 static void st7565_clear(void) {
   uint8_t p, c;
-  for(p = 0; p < 8; p++) {
+  for(p = 0; p < 8; p++) { 
     st7565_command(CMD_SET_PAGE | p);
     spiwrite(CMD_SET_COLUMN_LOWER | (0x0 & 0xf)); /* Already in command mode. */
     spiwrite(CMD_SET_COLUMN_UPPER | ((0x0 >> 4) & 0xf));
@@ -250,11 +259,12 @@ void st7565_set_contrast(uint8_t val)
     st7565_command(CMD_SET_VOLUME_SECOND | (val & 0x3f));
 }
 
+static const uint8_t PROGMEM pagemap[] = { 3, 2, 1, 0, 7, 6, 5, 4 };
+
 static void st7565_gotoxy(uint8_t x, uint8_t y) /* This is the hardware gotoxy */
 {
-	const uint8_t pagemap[] = { 3, 2, 1, 0, 7, 6, 5, 4 };
 	uint8_t cs = 1+x;
-	st7565_command(CMD_SET_PAGE | pagemap[y]);
+	st7565_command(CMD_SET_PAGE | pgm_read_byte(&(pagemap[y])) );
 	spiwrite(CMD_SET_COLUMN_LOWER | (cs & 0xf));
 	spiwrite(CMD_SET_COLUMN_UPPER | ((cs >> 4) & 0xf));
 	spiwrite(CMD_RMW);
@@ -300,82 +310,101 @@ void lcd_write_block(const uint8_t *buffer, uint8_t w, uint8_t h)
 // mfont8x8.c is generated with https://github.com/urjaman/st7565-fontgen
 #include "mfont8x8.c"
 
-void lcd_putchar(unsigned char c)
+// Some data for dynamic width mode with this font.
+#include "font-dyn-meta.c"
+
+static void lcd_putchar_(unsigned char c, uint8_t dw)
 {
+    
 	PGM_P block;
 	if (c < 0x20) c = 0x20;
 	block = (const char*)&(st7565_font[c-0x20][0]);
-	lcd_write_block_P(block,LCD_CHARW,1);
+	uint8_t w = LCD_CHARW;
+	if (dw) {
+	    uint8_t font_meta_b = pgm_read_byte(&(font_metadata[c-0x20]));
+	    block += XOFF(font_meta_b);
+	    w = DW(font_meta_b);
+	}
+    lcd_write_block_P(block,w,1);
 }
 
-void lcd_puts(const unsigned char * str)
+uint8_t lcd_strwidth(const unsigned char *str)
+{
+    uint8_t r=0;
+    uint8_t c;
+    while ((c = *str++)) {
+        if (c < 0x20) c = 0x20;
+        uint8_t meta_b = pgm_read_byte(&(font_metadata[c-0x20]));
+        r += DW(meta_b);
+    }
+    return r;
+}
+        
+uint8_t lcd_strwidth_P(PGM_P str)
+{ /* This is a convenience function, if you dont expect much change in the strings, i'd suggest you to
+     run once with this and dprint the constant and put that in your math instead --- atleast until gcc
+     is smart enough to do this for you. */
+    uint8_t r=0;
+    uint8_t c;
+    while ((c = pgm_read_byte(str++))) {
+        if (c < 0x20) c = 0x20;
+        uint8_t meta_b = pgm_read_byte(&(font_metadata[c-0x20]));
+        r += DW(meta_b);
+    }
+    return r;
+}
+
+
+void lcd_putchar(unsigned char c)
+{
+    lcd_putchar_(c,0);
+}    
+
+void lcd_putchar_dyn(unsigned char c)
+{
+    lcd_putchar_(c,1);
+}    
+
+static void lcd_puts_(const unsigned char * str, uint8_t dw)
 {
 start:
-        if (*str) lcd_putchar(*str);
+        if (*str) lcd_putchar_(*str,dw);
         else return;
         str++;
         goto start;
 }
 
-void lcd_puts_P(PGM_P str)
+static void lcd_puts_P_(PGM_P str,uint8_t dw)
 {
         unsigned char c;
 start:
         c = pgm_read_byte(str);
-        if (c) lcd_putchar(c);
+        if (c) lcd_putchar_(c,dw);
         else return;
         str++;
         goto start;
 }
 
+void lcd_puts(const unsigned char * str)
+{
+    lcd_puts_(str,0);
+}
+
 uint8_t lcd_puts_dyn(const unsigned char *str)
 {
-#if 0
-    // I tried out a freetype-generated variable-width fontdata but the result was butt ugly.
-    // That is really only a fail of the fontdata & freetype, not this code, so I'll leave
-    // This here so i can reuse it if i want to make a variable-width font later.
-    // I'm actually thinking of just adding xoff/xadw/draw-width data for the mfont8x8...
-    // Somebody would just need to fiddle that ...
-    int allocation = strlen((char*)str)*GLYPH_MAXW;
-    if (allocation > (LCDWIDTH-(int)lcd_char_x)) allocation = LCDWIDTH-(int)lcd_char_x;
-    if (allocation < 1) return 0;
-    uint8_t u8alloca = allocation;
-    uint8_t *drawbuf = alloca(u8alloca);
-    memset(drawbuf,0,u8alloca);
-    uint8_t pen_x = 0;
-    uint8_t dxw = 0;
-    while (*str) {
-        uint8_t c = *str++;
-        const struct st7565_glyph * gp;
-        if (c>=0xA0) {
-            gp = &(glyph_extd[c-0xA0]);
-        } else if ((c >= 0x20) && (c <= 0x7E)) {
-            gp = &(glyph_ascii[c-0x20]);
-        } else {
-            continue;
-        }
-        const uint8_t* glyphblock = &(gp->glyph[0]);
-        uint8_t gwidth = pgm_read_byte(&(gp->gwidth));
-        int8_t xoff = pgm_read_byte(&(gp->xoff));
-        uint8_t xadw = pgm_read_byte(&(gp->xadw));
-        uint8_t pdx = 0;
-        if ((((int)pen_x)+xoff) >= 0) pdx = pen_x+xoff;
-        for (uint8_t i=0;i<gwidth;i++) {
-            uint8_t dx = pdx+i;
-            if (dx < u8alloca) {
-                if (dx>=dxw) dxw = dx+1;
-                drawbuf[dx] |= pgm_read_byte(glyphblock);
-                glyphblock++;
-            } else {
-                break;
-            }
-        }
-        pen_x += xadw;
-        if (pen_x >= u8alloca) break;
-    }
-    lcd_write_block(drawbuf,dxw,1);
-    return dxw;
-#else
-    return 0;
-#endif
+    uint8_t xb = lcd_char_x;
+    lcd_puts_(str,1);
+    return lcd_char_x - xb;
+}
+
+void lcd_puts_P(PGM_P str)
+{
+    lcd_puts_P_(str,0);
+}
+
+uint8_t lcd_puts_dyn_P(PGM_P str)
+{
+    uint8_t xb = lcd_char_x;
+    lcd_puts_P_(str,1);
+    return lcd_char_x - xb;
 }

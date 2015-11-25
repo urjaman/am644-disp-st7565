@@ -40,3 +40,5 @@ void lgfxt_cmd(void);
 void blset_cmd(void);
 void ldw_cmd(void);
 void fader_cmd(void);
+void lcdclr_cmd(void);
+void lcdc2_cmd(void);

@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <avr/pgmspace.h> 
 #include <string.h>
 #include "glcd.h"
-#define dprintf
+#define dprintf(...)
 #else
 #define PROGMEM 
 #include <stdint.h>
@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 static uint8_t pgm_read_byte(const uint8_t* b) {
     return *b;
 }
-#define dprintf printf
+#define dprintf(...) fprintf(stderr, __VA_ARGS__)
 #endif
 
 static const uint8_t PROGMEM bvlut[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
@@ -307,7 +307,7 @@ void fillcircle(struct drawdata *d,
   for (uint8_t i=y0-r; i<=y0+r; i++) {
     setpixel(d, x0, i, color);
   }
-  uint8_t xg = x;
+//  uint8_t xg = x;
   while (x<y) {
     if (f >= 0) {
 #if 0

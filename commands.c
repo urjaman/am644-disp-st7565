@@ -71,18 +71,11 @@ void ldw_cmd(void)
 	if (token_count >= 3) {
 		uint8_t y = astr2luint(tokenptrs[1]);	
 		uint8_t x = astr2luint(tokenptrs[2]);
-		lcd_gotoxy(x,y);
-		int buflen = 0;
+		lcd_gotoxy_nt(x,y);
 		for (uint8_t i=3;i<token_count;i++) {
-		    buflen += strlen((char*)tokenptrs[i])+1;
+		    lcd_puts_dyn(tokenptrs[i]);
+		    lcd_puts_dyn_P(PSTR(" "));
 		}
-        unsigned char *buf = alloca(buflen);
-        buf[0] = 0;
-		for (uint8_t i=3;i<token_count;i++) {
-		    strcat((char*)buf,(char*)tokenptrs[i]);
-		    strcat((char*)buf," ");
-		}
-        lcd_puts_dyn(buf);
 	}
 }
 
@@ -97,15 +90,14 @@ void blset_cmd(void)
 }
 
 
-unsigned char tgt_red;
-unsigned char tgt_green;
-unsigned char tgt_blue;
-
+static unsigned char tgt_red;
+static unsigned char tgt_green;
+static unsigned char tgt_blue;
 
 static unsigned char fadechan(unsigned char current, unsigned char target)
 {
 	if (current != target) {
-		unsigned char change = current / 16; // Tota voi tuunata...
+		unsigned char change = current / 16;
 		if (!change) change = 1;
 		unsigned char diff;
 		if (current < target) {
@@ -126,13 +118,11 @@ static unsigned char cur_green = 0;
 static unsigned char cur_blue = 0;
 
 void fader(void) {
-	// Funktion sisällä static meinaa että se alustetaan vain kerran ja muistetaan
-	// myöhemmillä kutsuilla. En mä tätä normaalisti kommentois, mutta...
 	cur_red = fadechan(cur_red, tgt_red);
 	cur_green = fadechan(cur_green, tgt_green);
 	cur_blue = fadechan(cur_blue, tgt_blue);
 	rgbbl_set(cur_red, cur_green, cur_blue);
-	_delay_ms(4); // Hidastaa että joku näkeeki jotain.
+	_delay_ms(4);
 }
 
 void fader_cmd(void) {
@@ -225,15 +215,29 @@ void lbench_cmd(void) {
 
 void lcdc_cmd(void)
 {
-	for (uint8_t y=0;y<6;y++) {
+	for (uint8_t y=0;y<7;y++) {
 		lcd_gotoxy(0,y);
 		for (uint8_t i=0;i<LCD_MAXX;i++) lcd_putchar(i+(y*16)+32);
 	}
-	for (uint8_t y=6;y<8;y++) {
+	for (uint8_t y=7;y<8;y++) {
 		lcd_gotoxy(0,y);
-		for (uint8_t i=0;i<LCD_MAXX;i++) lcd_putchar(i+((y-6)*16)+0xA0);
+		for (uint8_t i=0;i<LCD_MAXX;i++) lcd_putchar(i+((y-7)*16)+192);
 	}
 }
+
+void lcdclr_cmd(void)
+{
+    lcd_clear();
+}
+                
+void lcdc2_cmd(void)
+{
+    for (uint8_t y=0;y<8;y++) {
+        lcd_gotoxy(0,y);
+		for (uint8_t i=0;i<LCD_MAXX;i++) lcd_putchar(i+(y*16)+128);
+    }
+}
+
 
 unsigned long int calc_opdo(unsigned long int val1, unsigned long int val2, unsigned char *op) {
 	switch (*op) {

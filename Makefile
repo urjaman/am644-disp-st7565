@@ -19,7 +19,7 @@
 ##
 
 PROJECT=am644-disp
-DEPS=uart.h main.h stlcdnr.h stlcdhw.h rgbbl.h
+DEPS=uart.h main.h stlcdnr.h stlcdhw.h rgbbl.h font-dyn-meta.c
 CIFACE_SOURCES=ciface.c console.c lib.c appdb.c commands.c glcd.c stlcdnr.c
 SOURCES=main.c uart.c rgbbl.c $(CIFACE_SOURCES)
 CC=avr-gcc

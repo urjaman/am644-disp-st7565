@@ -27,6 +27,8 @@ const unsigned char echostr[] PROGMEM = "ECHO";
 const unsigned char bljumpstr[] PROGMEM = "BLJUMP";
 const unsigned char lcdistr[] PROGMEM = "LINIT";
 const unsigned char lcdcstr[] PROGMEM = "LCHAR";
+const unsigned char lcdc2str[] PROGMEM = "LUCHR";
+const unsigned char lcdclrstr[] PROGMEM = "LCLR";
 const unsigned char lcdbrstr[] PROGMEM = "LBRI";
 const unsigned char lcdwstr[] PROGMEM = "LW";
 const unsigned char ldwstr[]  PROGMEM = "LDW";
@@ -42,7 +44,9 @@ const struct command_t appdb[] PROGMEM = {
 	{(PGM_P)echostr, &(echo_cmd)},
 	{(PGM_P)bljumpstr, &(bljump_cmd)},
 	{(PGM_P)lcdistr, &(lcdr_cmd)},
+	{(PGM_P)lcdclrstr, &(lcdclr_cmd)},
 	{(PGM_P)lcdcstr, &(lcdc_cmd)},
+	{(PGM_P)lcdc2str, &(lcdc2_cmd)},
 	{(PGM_P)lcdbrstr, &(lcdbr_cmd)},
 	{(PGM_P)lcdwstr, &(lcdw_cmd)},
 	{(PGM_P)ldwstr, &(ldw_cmd)},
